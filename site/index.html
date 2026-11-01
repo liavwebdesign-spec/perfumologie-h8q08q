@@ -385,6 +385,10 @@ function draw(img){
 function loadImage(src){
   return new Promise(res=>{
     const im = new Image();
+    /* Off-DOM images are "delayable" to Chrome, which keeps only a few in flight even on
+       HTTP/2. On GitHub Pages (~300ms per request) that made each 96-frame scene take
+       ~6.5s; marked high, a scene lands in ~1s. Only one scene is in flight at a time. */
+    im.fetchPriority = 'high';
     im.onload = ()=>res(im);
     im.onerror = ()=>res(null);
     im.src = src;
