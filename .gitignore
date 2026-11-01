@@ -1,0 +1,13 @@
+# Client reference material and intermediates stay local: assets/ holds screenshots of the
+# client's packshots (confidential), render/ the full-quality Blender output the site
+# frames are encoded from, preview/ the overview sheets.
+/assets/
+/render/
+/preview/
+/.claude/
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
