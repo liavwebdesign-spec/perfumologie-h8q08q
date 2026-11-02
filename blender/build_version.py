@@ -124,12 +124,23 @@ const proxyPath = PORTRAIT ? (innerWidth >= 600 ? CONFIG.pathPtl : CONFIG.pathPt
 }
 function draw(img){"""),
     ('dy = (ch-dh)/2;', 'dy = (ch-dh)*(.5 - topFocus()/2);'),
+    # computers stretch the 1280 frames to the screen, and the browser's default scaling is its roughest
+    ('ctx.drawImage(img, dx, dy, dw, dh);', "ctx.imageSmoothingQuality = 'high';\n  ctx.drawImage(img, dx, dy, dw, dh);"),
+    # computers went through 480 small frames before the sharp ones, so a first visit showed 640 frames for 20-30s.
+    # Now they go straight to sharp, and a small frame is only fetched for a scene reached before its sharp set started
+    ("""  const order = [];
+  for(let s=1; s<=CONFIG.scenes; s++) if(!loaded.lo[s]) order.push({s, tier:'lo'});
+""",
+     """  const order = [];
+  if(!USE_HI){ for(let s=1; s<=CONFIG.scenes; s++) if(!loaded.lo[s]) order.push({s, tier:'lo'}); }
+  else if(!store.hi[cur] && !loaded.lo[cur]) order.push({s:cur, tier:'lo'});
+"""),
 ]
 
-def encode(src, dst, *vf):
+def encode(src, dst, *vf, q=5):
     dst.mkdir(parents=True, exist_ok=True)
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', str(src / '%03d.jpg'), *vf,
-                    '-q:v', '5', str(dst / '%03d.jpg')], check=True)
+                    '-q:v', str(q), str(dst / '%03d.jpg')], check=True)
 
 def main(name):
     out = SITE / name
@@ -146,7 +157,8 @@ def main(name):
     shutil.copy(hero / 'pt' / '1' / '001.jpg', out / 'opening-pt.jpg')
     for s in '12345':
         render = hero if s == '1' else ROOT / 'render' / name
-        encode(render / 'hi' / s, out / 'frames' / s)
+        # the computer tier is what gets stretched, so it keeps the bottle's fine pattern (q 5 smeared it)
+        encode(render / 'hi' / s, out / 'frames' / s, q=2)
         encode(render / 'hi' / s, out / 'frames-lo' / s, '-vf', 'scale=640:360:flags=lanczos')
         encode(render / 'pt' / s, out / 'frames-pt' / s, '-vf', 'scale=405:720:flags=lanczos')
         encode(render / 'pt' / s, out / 'frames-ptl' / s)

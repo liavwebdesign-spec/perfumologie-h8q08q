@@ -441,7 +441,7 @@ cam = link(bpy.data.objects.new('cam', cam_d)); scn.camera = cam
 # ---------------------------------------------------------------- render setup
 r = scn.render
 r.resolution_x, r.resolution_y = (576, 1024) if MODE == 'pt' else (1280, 720)
-r.resolution_percentage = 100
+r.resolution_percentage = int(arg('--percent', '100'))
 r.engine = 'CYCLES'
 r.use_persistent_data = True
 r.image_settings.file_format = 'JPEG'; r.image_settings.quality = 94

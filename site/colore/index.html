@@ -431,6 +431,7 @@ function draw(img){
   let dw, dh, dx, dy;
   if(cr > ir){ dw = cw; dh = cw/ir; dx = 0; dy = (ch-dh)*(.5 - topFocus()/2); }
   else { dh = ch; dw = ch*ir; dy = 0; dx = (cw-dw)/2; }
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 
@@ -496,7 +497,8 @@ let pumping = false;
 let queueScene = 1;
 function buildQueue(cur){
   const order = [];
-  for(let s=1; s<=CONFIG.scenes; s++) if(!loaded.lo[s]) order.push({s, tier:'lo'});
+  if(!USE_HI){ for(let s=1; s<=CONFIG.scenes; s++) if(!loaded.lo[s]) order.push({s, tier:'lo'}); }
+  else if(!store.hi[cur] && !loaded.lo[cur]) order.push({s:cur, tier:'lo'});
   const fwd=[], back=[];
   if(USE_HI){
     for(let s=cur; s<=CONFIG.scenes; s++) if(!loaded.hi[s]) fwd.push({s, tier:'hi'});
