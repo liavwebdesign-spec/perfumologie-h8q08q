@@ -4,8 +4,8 @@
   python blender/build_version.py colore
 
 Run the palette's renders first (--palette <name> --scenes 2,3,4,5, into render/<name>/hi and pt).
-Scene 1 is shared: it plays in the dark before any palette fades in, so its frames come from site/
-(and from render/pt/1 for the tablet tier, which site/ does not have).
+Scene 1 is shared: it plays in the dark before any palette fades in, so it is rendered once
+(--palette gesso --scenes 1, into render/hero/hi and pt).
 The page at the root of site/ stays as it is: fixes for the versions go in here.
 """
 import shutil, subprocess, sys
@@ -58,6 +58,12 @@ JS = {
 
 # Size fixes for both versions. They stay out of site/index.html so the page already live does not move.
 COMMON_CSS = """
+  /* opening: the name is in the frame, behind the bottle. The heading stays for screen readers, and the rest sits bottom left like every other scene */
+  #intro::before{display:none}
+  #intro h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #intro .kicker{order:-1;margin:0 0 12px}
+  #intro .kicker::before{display:block}
+  #intro .sub{margin-top:0}
   /* wide and short laptops: the row of bottles takes the height, so the copy above it tightens */
   @media (min-width:641px) and (min-height:521px), (min-width:1025px){
     .layer.top h2{font-size:min(clamp(42px,7vw,112px),10.5vh)}
@@ -93,6 +99,10 @@ COMMON_CSS = """
 """
 
 COMMON_JS = [
+    # the opening is frame 0 of scene 1, so the bottle moves from the first tick of the scroll
+    ('introPx: 220,       // scroll length of the opening still before scene 1 begins',
+     'introPx: 1,         // the opening still is frame 0 of scene 1: no dead zone before it moves'),
+    ('<section class="layer center" id="intro" data-scene="0">', '<section class="layer" id="intro" data-scene="0">'),
     # any upright screen plays the upright render, and tablets get a sharper tier of it
     ("""const USE_HI = !LOW_POWER;
 """, ''),
@@ -131,13 +141,11 @@ def main(name):
     (out / 'index.html').write_text(html.replace('</style>\n</head>', COMMON_CSS + CSS[name] + '</style>\n</head>'),
                                     encoding='utf-8', newline='\n')
     shutil.copytree(SITE / 'fonts', out / 'fonts', dirs_exist_ok=True)
-    for f in ('opening.jpg', 'opening-pt.jpg'):
-        shutil.copy(SITE / f, out / f)
-    for tier in ('frames', 'frames-lo', 'frames-pt'):
-        shutil.copytree(SITE / tier / '1', out / tier / '1', dirs_exist_ok=True)
-    encode(ROOT / 'render' / 'pt' / '1', out / 'frames-ptl' / '1')
-    render = ROOT / 'render' / name
-    for s in '2345':
+    hero = ROOT / 'render' / 'hero'
+    shutil.copy(hero / 'hi' / '1' / '001.jpg', out / 'opening.jpg')
+    shutil.copy(hero / 'pt' / '1' / '001.jpg', out / 'opening-pt.jpg')
+    for s in '12345':
+        render = hero if s == '1' else ROOT / 'render' / name
         encode(render / 'hi' / s, out / 'frames' / s)
         encode(render / 'hi' / s, out / 'frames-lo' / s, '-vf', 'scale=640:360:flags=lanczos')
         encode(render / 'pt' / s, out / 'frames-pt' / s, '-vf', 'scale=405:720:flags=lanczos')

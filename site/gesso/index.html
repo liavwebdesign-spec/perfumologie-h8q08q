@@ -206,6 +206,12 @@
     #rail{display:none}
   }
 
+  /* opening: the name is in the frame, behind the bottle. The heading stays for screen readers, and the rest sits bottom left like every other scene */
+  #intro::before{display:none}
+  #intro h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #intro .kicker{order:-1;margin:0 0 12px}
+  #intro .kicker::before{display:block}
+  #intro .sub{margin-top:0}
   /* wide and short laptops: the row of bottles takes the height, so the copy above it tightens */
   @media (min-width:641px) and (min-height:521px), (min-width:1025px){
     .layer.top h2{font-size:min(clamp(42px,7vw,112px),10.5vh)}
@@ -276,7 +282,7 @@
 </header>
 
 <!-- ===== TEXT LAYERS (one per scene, index 0..5) ===== -->
-<section class="layer center" id="intro" data-scene="0">
+<section class="layer" id="intro" data-scene="0">
   <h1>perfumologie</h1>
   <div class="sub">Lusso accessibile</div>
   <div class="en">Available Luxuries</div>
@@ -350,7 +356,7 @@ const CONFIG = {
   smooth: .1,         // lerp factor per 60Hz frame (Lenis default). Wheel/trackpad only.
   smoothTouch: 1,     // touch gets no lerp: the OS already applies momentum, and
                       // stacking a second easing on top reads as lag ("stuck")
-  introPx: 220,       // scroll length of the opening still before scene 1 begins
+  introPx: 1,         // the opening still is frame 0 of scene 1: no dead zone before it moves
   holdPx: 520,        // scroll length the last frame + text is held after each scene
   loopPx: 700,        // tail zone where scene 5 loops on its own
   path:   (s,f) => `frames/${s}/${String(f).padStart(3,'0')}.jpg`,     // 1280x720

@@ -45,15 +45,16 @@ FAMILY = {
 # absorb: deepens the liquid, which a bright exposure would otherwise wash out.
 # lift_strips: raises the rim lights clear of the floor, where they leave hot patches.
 # fade_floor: brings the floor in over the start of scene 2 instead of all at once.
+# hero: scene 1 opens on the brand name standing behind the bottle (dark, so shared by these palettes).
 PALETTES = {
     'sabbia': dict(bg={'sand': '#d8c9b6', 'green': '#d3cdbf', 'tangerine': '#e4cab6',
                        'blue': '#c6cfd1', 'brown': '#d3c6bd', 'row': '#d9cfc3'}),
     'gesso': dict(bg={'sand': '#f1efea', 'green': '#f1efea', 'tangerine': '#f3ece6',
                       'blue': '#e9eff0', 'brown': '#efebe7', 'row': '#f1f0ec'},
-                  exposure=0.32, absorb=1.5, lift_strips=True, fade_floor=True),
+                  exposure=0.32, absorb=1.5, lift_strips=True, fade_floor=True, hero=True),
     'colore': dict(bg={'sand': '#2c5a42', 'green': '#2c5a42', 'tangerine': '#84452c',
                        'blue': '#135a70', 'brown': '#54433b', 'row': '#3a3d44'},
-                   glow=1500, lift_strips=True, fade_floor=True),
+                   glow=1500, lift_strips=True, fade_floor=True, hero=True),
 }
 PAL = PALETTES[PALETTE]
 BG = dict(PAL['bg'], dark='#0b0a09')
@@ -77,6 +78,7 @@ def span(f, f0, f1): return clamp((f - f0) / (f1 - f0))
 def ease(t): return t * t * t * (t * (t * 6 - 15) + 10)      # smootherstep
 def lerp(a, b, t): return a + (b - a) * t
 def ramp(f, f0, f1, a, b): return lerp(a, b, ease(span(f, f0, f1)))
+def ease_out(t): return 1 - (1 - t) ** 3                     # moves from the first tick of the scroll
 
 # ---------------------------------------------------------------- scene helpers
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -250,10 +252,10 @@ FONT_PATHS = ['C:/Windows/Fonts/GOTHICB.TTF',
 FONT = next((bpy.data.fonts.load(p) for p in FONT_PATHS if os.path.exists(p)), None)
 print('[font]', FONT.filepath if FONT else 'default')
 
-def flat_text(name, body, length):
+def flat_text(name, body, length, font=None):
     """Text as a flat, finely subdivided mesh in XY: reads along +X, letters up +Y, centred on Y."""
     cu = bpy.data.curves.new(name + '_c', 'FONT'); cu.body = body
-    if FONT: cu.font = FONT
+    if font or FONT: cu.font = font or FONT
     cu.size = 1.0; cu.resolution_u = 6
     tmp = link(bpy.data.objects.new(name + '_tmp', cu))
     bpy.context.view_layer.update()
@@ -397,6 +399,18 @@ cyc_mat = Mat('cyc').set(rough=PAL.get('floor_rough', 0.9))
 cyc.data.materials.append(cyc_mat.m)
 CYC_SPEC = cyc_mat.p.inputs['Specular IOR Level'].default_value
 
+# hero: the brand name as an object behind the bottle, so the depth and the glass are real
+HERO_SPIN = float(arg('--hero-spin', '-105'))
+HERO_ABSORB = float(arg('--hero-absorb', '0.45'))
+# the word spans 72% of the frame, so it stays whole where a 4:3 screen crops the sides
+HERO_H, HERO_W, HERO_Z, HERO_X = (13.0, 5.9, 2.9, -0.65) if MODE == 'pt' else (7.0, 9.93, 2.5, -0.76)
+hero_font_path = 'C:/Users/liav/Desktop/עסק/פונטים/פונטים באנגלית/ClashDisplay_Complete/Fonts/OTF/ClashDisplay-Medium.otf'
+hero_font = bpy.data.fonts.load(hero_font_path) if os.path.exists(hero_font_path) else None
+hero_word = mesh_obj('hero_word', flat_text('hero_word', 'perfumologie', HERO_W, hero_font), None, smooth=False)
+hero_word.rotation_euler = (math.pi / 2, 0, 0)
+hero_m, hero_em = emissive('hero_word', (1.0, 0.96, 0.9), 5)
+hero_word.data.materials.append(hero_m)
+
 world = bpy.data.worlds.new('world'); scn.world = world
 try: world.use_nodes = True
 except Exception: pass
@@ -477,8 +491,22 @@ def state(s, f):
     st = dict(look=1, floor=1, target=2.24, yaw=0, pitch=4, H=H_FULL, W=0, float=0,
               tilt=0, spin=20, light=1, bg=BG['sand'], line=0, line_a=0, spark_z=None,
               spark_a=0, lift=0, twist=0, pump_tilt=0, rings=[0, 0, 0],
-              fam=lin_hex(FAMILY['green']), main_x=0, others={k: None for k in ROW}, sweep=0)
-    if s == 1:
+              fam=lin_hex(FAMILY['green']), main_x=0, others={k: None for k in ROW}, sweep=0,
+              word_a=0, word_y=3, word_x=0, halo=1, absorb=1)
+    if s == 1 and PAL.get('hero'):
+        # the bottle comes forward and turns fast while the name backs away slowly; ends where scene 2 starts
+        t = ease_out(f / 95)
+        spin = lerp(HERO_SPIN, 15, t)
+        st.update(look=0, float=0.5, bg=BG['dark'], tilt=lerp(-8, 11, t), spin=spin,
+                  # the spout holds still while the contour light is on, because the light outlines it on the left
+                  twist=-spin * (1 - ease(span(f, 40, 80))),
+                  # thinner liquid at the start lets the name read through the glass
+                  absorb=lerp(HERO_ABSORB, 1, ease(span(f, 10, 70))),
+                  light=lerp(0.35, 1, ease(span(f, 0, 70))), line=1, line_a=0.6 * (1 - ease(span(f, 40, 80))), halo=0.25,
+                  H=lerp(HERO_H, 6.2, t), pitch=lerp(9, 4, t), yaw=lerp(6, -4, t),
+                  # the yaw shifts the far word sideways: HERO_X keeps it centred on the screen at the start
+                  word_a=1 - ease(span(f, 30, 72)), word_y=lerp(3, 9, t), word_x=lerp(HERO_X, 0.8, t))
+    elif s == 1:
         st.update(look=0, tilt=11, float=0.5, spin=ramp(f, 70, 95, 0, 15), light=ramp(f, 48, 82, 0, 1), bg=BG['dark'],
                   line=ramp(f, 10, 62, 0, 1), line_a=1 - ease(span(f, 68, 92)),
                   spark_z=ramp(f, 0, 14, -2.6, 0.07), spark_a=1 - ease(span(f, 14, 26)),
@@ -519,7 +547,7 @@ def state(s, f):
 
 def apply(st, s, f):
     global ABSORB
-    ABSORB = lerp(1.0, PAL.get('absorb', 1.0), st['look'])
+    ABSORB = lerp(st['absorb'], PAL.get('absorb', 1.0), st['look'])
     tilt_main.location = (st['main_x'], 0, st['float'])
     tilt_main.rotation_euler = (0, math.radians(st['tilt']), 0)
     spin_main.rotation_euler = (0, 0, math.radians(st['spin']))
@@ -536,7 +564,7 @@ def apply(st, s, f):
         ob.data.bevel_factor_end = max(0.0005, st['line'])
         ob.hide_render = st['line'] <= 0.001 or st['line_a'] <= 0.001
     line_core_em.inputs['Strength'].default_value = 14 * st['line_a']
-    line_halo_em.inputs['Strength'].default_value = 1.2 * st['line_a']
+    line_halo_em.inputs['Strength'].default_value = 1.2 * st['line_a'] * st['halo']
     hide_spark = st['spark_z'] is None or st['spark_a'] <= 0.001
     spark.hide_render = spark_h.hide_render = hide_spark
     if not hide_spark:
@@ -559,6 +587,9 @@ def apply(st, s, f):
     scn.view_settings.exposure = PAL.get('exposure', 0) * st['look']
     SWEEP.data.energy = 1400 * st['sweep']
     SWEEP.location = (lerp(-14, 14, f / N) if s == 5 else -14, -9, 3)
+    hero_word.hide_render = st['word_a'] <= 0.001
+    hero_word.location = (st['word_x'] - HERO_W / 2, st['word_y'], HERO_Z)
+    hero_em.inputs['Strength'].default_value = 5 * st['word_a']
     cyc.hide_render = s == 1          # the dark opening floats in black, no floor
     bg = lin_hex(st['bg'])
     # scene 1 has no floor: fading it in keeps the seam into scene 2 from popping
