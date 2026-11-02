@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="it" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>perfumologie · Lusso accessibile</title>
+<meta name="description" content="perfumologie. Lusso accessibile, Available Luxuries. Body care and home fragrance in four families. Maggio 2027.">
+<style>
+  /* ===== FONTS ===== */
+  @font-face{font-family:'Clash Display';src:url('fonts/ClashDisplay-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+  @font-face{font-family:'Clash Display';src:url('fonts/ClashDisplay-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Clash Grotesk';src:url('fonts/ClashGrotesk-Light.woff2') format('woff2');font-weight:300;font-style:normal;font-display:swap}
+  @font-face{font-family:'Clash Grotesk';src:url('fonts/ClashGrotesk-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:'Clash Grotesk';src:url('fonts/ClashGrotesk-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+
+  :root{
+    --bg:#0b0a09;
+    --fg:#f3eee6;
+    --muted:rgba(243,238,230,.66);
+    --accent:#c9a86a;          /* champagne, the colour of the light line */
+    --ink:#1d1a17;             /* text on the sand backdrops */
+    --ink-muted:rgba(29,26,23,.64);
+    --accent-ink:#7d5f2c;
+    --ease:cubic-bezier(.22,.61,.36,1);
+    --head:'Clash Display','Helvetica Neue',Arial,sans-serif;
+    --body:'Clash Grotesk','Helvetica Neue',Arial,system-ui,sans-serif;
+    /* chrome colours: light on the dark scenes, warm ink once the sand backdrop is in */
+    --ui:#f3eee6;--ui-m:rgba(243,238,230,.66);--ui-f:rgba(243,238,230,.26);--ui-f2:rgba(243,238,230,.14);
+  }
+  body.light{--ui:#1d1a17;--ui-m:rgba(29,26,23,.62);--ui-f:rgba(29,26,23,.22);--ui-f2:rgba(29,26,23,.12)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:auto}
+  body{background:var(--bg);color:var(--fg);font-family:var(--body);-webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;user-select:none;-webkit-user-select:none}
+  #spacer{width:1px}
+
+  #stage{position:fixed;inset:0;display:block;width:100%;height:100%;background:var(--bg);z-index:1}
+
+  /* header, rail, counter and scrub bar take --ui, which flips with body.light */
+  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    padding:clamp(18px,2.4vw,32px) clamp(20px,3.5vw,56px);pointer-events:none;color:var(--ui);transition:color .5s var(--ease)}
+  header .brand{font-family:var(--head);font-weight:500;font-size:clamp(21px,1.7vw,27px);letter-spacing:-.01em}
+  header nav{display:flex;gap:clamp(16px,2.4vw,36px);font-family:var(--body);font-size:13px;letter-spacing:.08em;color:var(--ui-m);font-weight:400;pointer-events:auto}
+  header nav span{cursor:pointer;position:relative;padding-bottom:4px;transition:color .25s}
+  header nav span::after{content:"";position:absolute;bottom:0;inset-inline-start:0;width:0;height:1px;background:var(--ui);transition:width .3s var(--ease)}
+  header nav span:hover,header nav span.active{color:var(--ui)}
+  header nav span:hover::after,header nav span.active::after{width:100%}
+  @media (max-width:640px){header nav{display:none}}
+
+  /* text layers. Colours come from variables so a layer can switch to ink */
+  .layer{--t:var(--fg);--tm:var(--muted);--ta:var(--accent);
+    --sh:0 1px 3px rgba(5,5,7,.34);--shs:0 1px 2px rgba(5,5,7,.38);
+    position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:0 clamp(20px,3.5vw,56px) clamp(84px,10vh,120px);pointer-events:none;color:var(--t);
+    opacity:0;transform:translateY(24px);transition:opacity .55s var(--ease),transform .7s var(--ease)}
+  .layer.show{opacity:1;transform:translateY(0)}
+
+  /* soft dark scrim behind the copy only, faded to transparent on every side */
+  .layer::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    opacity:0;transition:opacity .8s var(--ease);
+    background:linear-gradient(to top,
+      rgba(5,5,7,.46) 0%, rgba(5,5,7,.40) 32%, rgba(5,5,7,.29) 48%, rgba(5,5,7,.18) 62%,
+      rgba(5,5,7,.09) 74%, rgba(5,5,7,.03) 86%, transparent 96%);
+    -webkit-mask-image:linear-gradient(to right,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%);
+            mask-image:linear-gradient(to right,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%)}
+  .layer.show::before{opacity:1}
+  .layer.end::before{
+    -webkit-mask-image:linear-gradient(to left,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%);
+            mask-image:linear-gradient(to left,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%)}
+  .layer.center::before{
+    background:radial-gradient(86% 54% at 50% 50%,
+      rgba(5,5,7,.46) 0%, rgba(5,5,7,.40) 30%, rgba(5,5,7,.29) 48%,
+      rgba(5,5,7,.16) 64%, rgba(5,5,7,.06) 80%, transparent 100%);
+    -webkit-mask-image:none;mask-image:none}
+
+  /* ink: dark copy straight on the sand backdrop, no scrim, no shadow.
+     .ink applies from tablet up, .ink-m on phones too (their crop differs) */
+  @media (min-width:641px){
+    .layer.ink{--t:var(--ink);--tm:var(--ink-muted);--ta:var(--accent-ink);--sh:none;--shs:none}
+    .layer.ink::before{display:none}
+  }
+  .layer.ink-m{--t:var(--ink);--tm:var(--ink-muted);--ta:var(--accent-ink);--sh:none;--shs:none}
+  .layer.ink-m::before{display:none}
+
+  .layer .kicker{font-family:var(--body);font-size:clamp(12px,.95vw,14px);letter-spacing:.16em;color:var(--ta);font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+  .layer .kicker::before{content:"";width:34px;height:1px;background:var(--ta);flex:none}
+  .layer h1,.layer h2{font-family:var(--head);font-weight:500;line-height:.98;letter-spacing:-.015em;
+    font-size:clamp(42px,7vw,112px);max-width:14ch;color:var(--t);text-shadow:var(--sh)}
+  .layer h1 em,.layer h2 em{font-style:normal;color:var(--ta)}
+  .layer .en,.layer p,.layer .kicker,.layer .sub,.layer .fam{text-shadow:var(--shs)}
+  .layer .en{margin-top:14px;font-family:var(--body);font-weight:300;font-size:clamp(18px,1.6vw,26px);letter-spacing:.005em;color:var(--tm)}
+  .layer p{margin-top:18px;max-width:44ch;font-family:var(--body);font-size:clamp(15px,1.2vw,19px);line-height:1.65;color:var(--tm);font-weight:300}
+  .layer.end{align-items:flex-end;text-align:right}
+  .layer.end .kicker{flex-direction:row-reverse}
+  .layer.center{align-items:center;text-align:center;justify-content:center;padding-bottom:0}
+  .layer.center .kicker{justify-content:center}
+  .layer.center p{margin-left:auto;margin-right:auto}
+  .layer.center h1,.layer.center h2{max-width:none}
+  /* .top: the row of four sits low in the frame, the headline takes the upper third */
+  .layer.top{justify-content:flex-start;padding-top:clamp(92px,13vh,140px)}
+
+  /* the four families */
+  .fam{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;margin-top:26px;font-family:var(--body);font-size:clamp(13px,1vw,15px);letter-spacing:.08em;color:var(--tm);font-weight:400}
+  .fam span{display:inline-flex;align-items:center;gap:9px}
+  .fam i{width:10px;height:10px;border-radius:50%;flex:none}
+
+  /* opening */
+  #intro h1{font-size:clamp(64px,12vw,200px);letter-spacing:-.025em;max-width:none}
+  #intro .sub{font-family:var(--head);font-weight:400;font-size:clamp(20px,2.1vw,32px);letter-spacing:.01em;color:var(--t);margin-top:14px}
+  #intro .en{margin-top:6px}
+  #intro .kicker{margin:30px 0 0}
+  #intro .kicker::before{display:none}
+
+  /* closing action */
+  .cta{pointer-events:auto;display:inline-flex;align-items:center;gap:12px;margin-top:30px;padding:15px 30px;cursor:pointer;
+    background:transparent;color:var(--t);border:1px solid currentColor;border-radius:999px;
+    font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.06em;transition:background .25s,color .25s}
+  .cta:hover{background:var(--t);color:var(--bg)}
+  .layer.ink .cta:hover,.layer.ink-m .cta:hover{color:#efe8dd}
+
+  /* progress rail */
+  #rail{position:fixed;inset-inline-end:clamp(16px,2.6vw,40px);top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:14px;align-items:center}
+  #rail i{width:2px;height:20px;background:var(--ui-f);border-radius:2px;transition:background .5s,height .3s;position:relative;overflow:hidden}
+  #rail i.done{background:var(--ui-m)}
+  #rail i.on{height:38px;background:var(--ui-f)}
+  #rail i.on::after{content:"";position:absolute;top:0;left:0;width:100%;height:var(--fill,0%);background:var(--ui);transition:background .5s}
+  /* phones: the bottle fills the width in most scenes and the row reaches the edge, so the rail
+     would sit on the glass; the counter and the scrub bar already carry progress there */
+  @media (max-width:640px){#rail{display:none}}
+
+  /* scene counter */
+  #counter{position:fixed;inset-inline-end:clamp(20px,3.5vw,56px);bottom:clamp(20px,3vh,32px);z-index:20;font-family:var(--body);font-weight:400;font-size:15px;letter-spacing:.1em;color:var(--ui-m);transition:color .5s}
+  #counter b{color:var(--ui);font-size:21px;font-weight:500;transition:color .5s}
+
+  /* scrub bar at the bottom edge */
+  #scrub{position:fixed;left:0;right:0;bottom:0;height:2px;z-index:21;background:var(--ui-f2);transition:background .5s}
+  #scrub i{display:block;height:100%;width:0;background:var(--ui);transition:background .5s}
+
+  /* loader */
+  #loader{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .8s var(--ease)}
+  #loader.hidden{opacity:0;pointer-events:none}
+  #loader .word{font-family:var(--head);font-weight:500;font-size:clamp(40px,7vw,96px);letter-spacing:-.02em}
+  #loader .bar{width:min(320px,70vw);height:1px;background:rgba(243,238,230,.15);overflow:hidden}
+  #loader .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  #loader small{font-family:var(--body);font-size:13px;letter-spacing:.12em;color:var(--muted);font-weight:300}
+
+  /* buffering pill */
+  #buffer{position:fixed;left:50%;top:clamp(80px,10vh,110px);transform:translateX(-50%);z-index:30;padding:8px 16px;border-radius:999px;background:rgba(11,10,9,.6);backdrop-filter:blur(8px);
+    font-family:var(--body);font-size:12px;letter-spacing:.08em;color:var(--muted);opacity:0;transition:opacity .3s;display:flex;align-items:center;gap:10px;pointer-events:none}
+  #buffer.show{opacity:1}
+  #buffer i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;flex:none}
+  @keyframes pulse{50%{opacity:.2}}
+
+  /* =====================================================================
+     RESPONSIVE. Everything below is gated to phones and short viewports.
+     A desktop at 1280x720 matches none of these blocks.
+     ===================================================================== */
+
+  /* ---- phones (portrait and landscape), <= 640px wide ---- */
+  @media (max-width:640px){
+    header{padding:16px 20px}
+    header .brand{font-size:20px}
+
+    .layer{padding:0 20px calc(72px + env(safe-area-inset-bottom,0px))}
+    .layer .kicker{font-size:11px;letter-spacing:.14em;margin-bottom:10px}
+    .layer .kicker::before{width:24px}
+    .layer h1,.layer h2{font-size:clamp(34px,10vw,44px);line-height:1.02;max-width:none}
+    .layer .en{font-size:17px;margin-top:10px}
+    .layer p{font-size:15px;line-height:1.55;margin-top:12px;max-width:none}
+    /* one alignment on a phone keeps the rhythm and the scrim geometry consistent */
+    .layer.end{align-items:flex-start;text-align:left}
+    .layer.end .kicker{flex-direction:row}
+    .layer.end::before{
+      -webkit-mask-image:linear-gradient(to right,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%);
+              mask-image:linear-gradient(to right,#000 0%,#000 64%,rgba(0,0,0,.4) 83%,transparent 98%)}
+    .layer.center{padding-bottom:0}
+    .layer.top{justify-content:flex-end;padding-top:0;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+    .fam{gap:8px 18px;margin-top:18px;font-size:12px}
+
+    #intro h1{font-size:clamp(44px,13vw,76px)}
+    #intro .sub{font-size:19px;margin-top:8px}
+    .cta{margin-top:22px;padding:14px 26px;font-size:14px}
+
+    #counter{inset-inline-end:20px;bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:13px}
+    #counter b{font-size:18px}
+    #buffer{top:64px;font-size:11px;padding:7px 14px}
+    #loader .word{font-size:clamp(36px,11vw,50px)}
+    #loader .bar{width:min(240px,64vw)}
+  }
+
+  /* ---- short viewports: phones held sideways, small laptops in split view ---- */
+  @media (max-height:520px) and (max-width:1024px){
+    .layer{padding-bottom:54px;justify-content:flex-end}
+    /* the row of four sits in the lower half of the landscape frame: copy goes on top */
+    .layer.top{justify-content:flex-start;padding-top:54px;padding-bottom:0}
+    .layer.top .fam{display:none}
+    .layer .kicker{margin-bottom:6px}
+    .layer h1,.layer h2{font-size:clamp(28px,6.5vh,44px);line-height:1}
+    .layer .en{font-size:15px;margin-top:6px}
+    .fam{margin-top:10px}
+    #intro h1{font-size:clamp(48px,14vh,90px)}
+    #intro .sub{font-size:16px;margin-top:6px}
+    #intro .kicker{margin-top:14px}
+    .cta{margin-top:14px;padding:10px 22px}
+    #rail{display:none}
+  }
+
+  /* wide and short laptops: the row of bottles takes the height, so the copy above it tightens */
+  @media (min-width:641px) and (min-height:521px), (min-width:1025px){
+    .layer.top h2{font-size:min(clamp(42px,7vw,112px),10.5vh)}
+  }
+  @media (min-width:641px) and (max-height:800px){
+    .layer.top .kicker{margin-bottom:10px}
+    .layer.top .en{margin-top:8px}
+    .fam{margin-top:14px}
+    .cta{margin-top:14px;padding:10px 24px;font-size:14px}
+  }
+  /* upright tablets: 3:4 crops the frame and lifts the row into the copy, so the copy moves to the floor under it, as on phones */
+  @media (min-width:641px) and (max-aspect-ratio:5/6){
+    .layer.top{justify-content:flex-end;padding-top:0;padding-bottom:clamp(84px,9vh,140px)}
+  }
+  /* small phones held sideways: the side copy has to stop short of the bottle */
+  @media (max-width:640px) and (orientation:landscape){
+    .layer .en{max-width:150px;line-height:1.25}
+  }
+  /* phones held sideways: the closing button has to stay clear of the pumps */
+  @media (max-height:520px) and (max-width:1024px){
+    .layer[data-scene="5"] .en{display:none}
+    .layer[data-scene="5"] .cta{margin-top:8px;padding:8px 18px;font-size:13px}
+  }
+  /* small upright phones: the copy has only the space under the row */
+  @media (max-width:640px) and (max-height:680px) and (orientation:portrait){
+    .layer.top{padding-bottom:calc(54px + env(safe-area-inset-bottom,0px))}
+    .layer.top .kicker{margin-bottom:6px}
+    .layer.top h2{font-size:30px}
+    .layer.top .en{display:none}
+    .fam{gap:6px 12px;margin-top:10px;font-size:11px}
+    .cta{margin-top:12px;padding:10px 20px;font-size:13px}
+  }
+
+  :root{--ink:#f6f1e8;--ink-muted:rgba(246,241,232,.86);--accent-ink:#ecd9ae}
+  body.light{--ui:#f6f1e8;--ui-m:rgba(246,241,232,.76);--ui-f:rgba(246,241,232,.3);--ui-f2:rgba(246,241,232,.16)}
+  .layer.ink .cta:hover,.layer.ink-m .cta:hover{color:#1b1a18}
+  .fam i{box-shadow:0 0 0 1px rgba(246,241,232,.6)}
+  /* upright tablets: the copy lands on the glow at the foot of the wall, so it keeps the scrim */
+  @media (min-width:641px) and (orientation:portrait){
+    .layer.ink:not(.ink-m)::before{display:block}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+<div id="spacer"></div>
+
+<header>
+  <div class="brand">perfumologie</div>
+  <nav>
+    <span data-goto="1">La luce</span>
+    <span data-goto="2">400 ml</span>
+    <span data-goto="4">Famiglie</span>
+    <span data-goto="5">2027</span>
+  </nav>
+</header>
+
+<!-- ===== TEXT LAYERS (one per scene, index 0..5) ===== -->
+<section class="layer center" id="intro" data-scene="0">
+  <h1>perfumologie</h1>
+  <div class="sub">Lusso accessibile</div>
+  <div class="en">Available Luxuries</div>
+  <div class="kicker">MAGGIO 2027 · MAY 2027</div>
+</section>
+
+<section class="layer" data-scene="1">
+  <div class="kicker">01</div>
+  <h2>Disegnato<br><em>dalla luce.</em></h2>
+  <div class="en">Drawn by light.</div>
+</section>
+
+<section class="layer end ink" data-scene="2">
+  <div class="kicker">02</div>
+  <h2>400 <em>ml</em></h2>
+  <div class="en">Corpo e casa · Body and home</div>
+</section>
+
+<section class="layer ink" data-scene="3">
+  <div class="kicker">03</div>
+  <h2>Apri.<br><em>Respira.</em></h2>
+  <div class="en">Open. Breathe.</div>
+</section>
+
+<section class="layer center top ink ink-m" data-scene="4">
+  <div class="kicker">04</div>
+  <h2>Quattro <em>famiglie.</em></h2>
+  <div class="en">Four families.</div>
+  <div class="fam">
+    <span><i style="background:#4f6a53"></i>GREEN GARDENA</span>
+    <span><i style="background:#a4502e"></i>TIMELESS TANGERINE</span>
+    <span><i style="background:#2f6f84"></i>BLUE BAYBERRY</span>
+    <span><i style="background:#6f625c"></i>BROWN BERGAMOT</span>
+  </div>
+</section>
+
+<section class="layer center top ink ink-m" data-scene="5">
+  <div class="kicker">MAGGIO 2027 · MAY 2027</div>
+  <h2>Lusso, <em>ogni giorno.</em></h2>
+  <div class="en">Luxury, every day.</div>
+  <div><button class="cta" onclick="app.restart()">Ricomincia · Watch again</button></div>
+</section>
+
+<!-- ===== UI ===== -->
+<div id="rail"></div>
+<div id="counter"><b>00</b> / 05</div>
+<div id="scrub"><i id="scrubfill"></i></div>
+<div id="buffer"><i></i>Caricamento · Loading</div>
+
+<div id="loader">
+  <div class="word">perfumologie</div>
+  <div class="bar"><i id="loadbar"></i></div>
+  <small id="loadtxt">Loading</small>
+</div>
+
+<script>
+/* =========================================================
+   SCROLL-SCRUBBED IMAGE SEQUENCE
+   The page owns a tall spacer. Scroll position maps 1:1 onto a
+   global frame index, so the animation advances frame by frame as
+   you scroll and runs backwards when you scroll up.
+   Timeline: [intro still] [scene 1 .. hold] [scene 2 .. hold] ...
+   [scene 5] then an endless loop at the very bottom.
+   Frames are rendered in Blender from blender/perfumologie.py.
+   ========================================================= */
+const CONFIG = {
+  scenes: 5,
+  frames: 96,
+  fps: 24,
+  pxPerFrame: 24,     // scroll distance that advances one frame
+  smooth: .1,         // lerp factor per 60Hz frame (Lenis default). Wheel/trackpad only.
+  smoothTouch: 1,     // touch gets no lerp: the OS already applies momentum, and
+                      // stacking a second easing on top reads as lag ("stuck")
+  introPx: 220,       // scroll length of the opening still before scene 1 begins
+  holdPx: 520,        // scroll length the last frame + text is held after each scene
+  loopPx: 700,        // tail zone where scene 5 loops on its own
+  path:   (s,f) => `frames/${s}/${String(f).padStart(3,'0')}.jpg`,     // 1280x720
+  pathLo: (s,f) => `frames-lo/${s}/${String(f).padStart(3,'0')}.jpg`,  // 640x360 proxy
+  pathPt: (s,f) => `frames-pt/${s}/${String(f).padStart(3,'0')}.jpg`,  // 405x720, rendered for portrait phones
+  pathPtl: (s,f) => `frames-ptl/${s}/${String(f).padStart(3,'0')}.jpg`, // 576x1024, upright tablets and tall screens
+  opening: 'opening.jpg',
+  openingPt: 'opening-pt.jpg',
+  revealAt: .9,       // text starts fading in at this point inside a scene (late enough that the row of four has settled)
+};
+
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d', {alpha:false});
+const spacer = document.getElementById('spacer');
+const layers = [...document.querySelectorAll('.layer')];
+const rail = document.getElementById('rail');
+const counter = document.querySelector('#counter b');
+const scrubfill = document.getElementById('scrubfill');
+const bufferPill = document.getElementById('buffer');
+const loader = document.getElementById('loader');
+const loadbar = document.getElementById('loadbar');
+const loadtxt = document.getElementById('loadtxt');
+const navItems = [...document.querySelectorAll('header nav span[data-goto]')];
+
+/* Two tiers per scene. `lo` is a small proxy that covers the whole timeline
+   quickly so scrubbing always has *a* frame; `hi` replaces it as it lands.
+   Frames are stored as <img>, i.e. compressed bytes the browser is free to
+   evict. They must never be held as ImageBitmap: hundreds of 1280x720 RGBA
+   frames are gigabytes of pixels the browser may not reclaim, which kills mobile tabs. */
+const store = { hi:{}, lo:{} };     /* store.hi[scene][frame] = HTMLImageElement */
+const loaded = { hi:{}, lo:{} };    /* loaded.hi[scene] = true once every frame is in */
+let opening = null;
+
+/* Phones stay on the proxy tier: 640x360 is past retina on a handset, and it
+   drops the download and the memory ceiling with it. */
+const LOW_POWER = innerWidth < 900 || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+/* Portrait phones get their own 9:16 render (camera reframed in Blender, not a
+   crop), at full 720 height. Chosen once at boot; a rotation reloads to re-pick. */
+const PORTRAIT = (innerHeight / innerWidth) > 1.2;
+const USE_HI = !LOW_POWER && !PORTRAIT;
+const proxyPath = PORTRAIT ? (innerWidth >= 600 ? CONFIG.pathPtl : CONFIG.pathPt) : CONFIG.pathLo;
+
+/* ---------- timeline ---------- */
+const scenePx = CONFIG.frames * CONFIG.pxPerFrame;
+const seg = [];        /* seg[s] = {start, end, holdEnd} in scroll px */
+(function buildTimeline(){
+  let cur = CONFIG.introPx;
+  for(let s=1; s<=CONFIG.scenes; s++){
+    const start = cur;
+    const end = start + scenePx;
+    const isLast = s === CONFIG.scenes;
+    const holdEnd = end + (isLast ? CONFIG.loopPx : CONFIG.holdPx);
+    seg[s] = {start, end, holdEnd};
+    cur = holdEnd;
+  }
+})();
+const TOTAL = seg[CONFIG.scenes].holdEnd;
+function applyHeight(){ spacer.style.height = (TOTAL + innerHeight) + 'px'; }
+
+/* ---------- drawing ---------- */
+let dpr = 1, lastImg = null;
+function resize(){
+  /* Cap the backing store at 1.5x on low-power devices: the proxy frames are
+     small anyway, so a 3x canvas is pure fill cost with no added detail. */
+  dpr = Math.min(window.devicePixelRatio || 1, LOW_POWER ? 1.5 : 2);
+  canvas.width = innerWidth * dpr;
+  canvas.height = innerHeight * dpr;
+  canvas.style.width = innerWidth+'px';
+  canvas.style.height = innerHeight+'px';
+  applyHeight();
+  if(lastImg) draw(lastImg);
+}
+function topFocus(){
+  const ramp = s => { const t = Math.max(0, Math.min(1, (viewY - seg[s].start) / (30 * CONFIG.pxPerFrame))); return t*t*(3-2*t); };
+  return ramp(3) - ramp(4);
+}
+function draw(img){
+  const iw = img && (img.width || img.naturalWidth), ih = img && (img.height || img.naturalHeight);
+  if(!iw || !ih) return;
+  lastImg = img;
+  const cw = canvas.width, ch = canvas.height;
+  const ir = iw/ih, cr = cw/ch;
+  let dw, dh, dx, dy;
+  if(cr > ir){ dw = cw; dh = cw/ir; dx = 0; dy = (ch-dh)*(.5 - topFocus()/2); }
+  else { dh = ch; dw = ch*ir; dy = 0; dx = (cw-dw)/2; }
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
+
+/* ---------- loading ---------- */
+function loadImage(src){
+  return new Promise(res=>{
+    const im = new Image();
+    /* Off-DOM images are "delayable" to Chrome, which keeps only a few in flight even on
+       HTTP/2. On GitHub Pages (~300ms per request) that made each 96-frame scene take
+       ~6.5s; marked high, a scene lands in ~1s. Only one scene is in flight at a time. */
+    im.fetchPriority = 'high';
+    im.onload = ()=>res(im);
+    im.onerror = ()=>res(null);
+    im.src = src;
+  });
+}
+/* Decoding is warmed on a sliding window instead of up front, so the browser
+   keeps only the frames near the playhead in decoded form and can drop the
+   rest under pressure. decode() is idempotent and cheap once warm. */
+let decodeBusy = 0;
+function warmDecode(s, from){
+  const tier = (USE_HI && store.hi[s]) ? 'hi' : 'lo';
+  const arr = store[tier][s];
+  if(!arr) return;
+  /* Window is wide on purpose: one wheel notch on Windows is ~100px = 4
+     frames, and a flick can be 30+, so a narrow window keeps landing on cold
+     frames. Look ahead further than behind since scrolling is mostly forward. */
+  for(let i=Math.max(0,from-6); i<Math.min(from+40, CONFIG.frames); i++){
+    if(decodeBusy >= 4) return;
+    const im = arr[i];
+    if(im && im.naturalWidth && !im.__warm){
+      im.__warm = 1;
+      decodeBusy++;
+      im.decode().catch(()=>{}).then(()=>{ decodeBusy--; });
+    }
+  }
+}
+async function loadScene(s, tier, onProgress){
+  const st = store[tier], ld = loaded[tier];
+  if(ld[s]) return st[s];
+  if(st[s] && st[s].__loading) return st[s].__loading;
+  st[s] = st[s] || [];
+  const path = tier==='hi' ? CONFIG.path : proxyPath;
+  const tasks = [];
+  for(let f=1; f<=CONFIG.frames; f++){
+    tasks.push(loadImage(path(s,f)).then(im=>{
+      if(im && im.naturalWidth) st[s][f-1] = im;
+      onProgress && onProgress();
+      if(pending && pending.scene===s && pending.frame===f-1) render(true);
+    }));
+  }
+  const p = Promise.all(tasks).then(()=>{ ld[s]=true; return st[s]; });
+  st[s].__loading = p;
+  return p;
+}
+
+/* Priority queue. Order is recomputed whenever the visitor changes scene:
+   proxies for everything first, then hi-res for the current scene, then
+   forward from it, then backward. One scene at a time so the scene the
+   visitor is actually looking at always has the whole pipe. */
+let queue = [];
+let pumping = false;
+let queueScene = 1;
+function buildQueue(cur){
+  const order = [];
+  for(let s=1; s<=CONFIG.scenes; s++) if(!loaded.lo[s]) order.push({s, tier:'lo'});
+  const fwd=[], back=[];
+  if(USE_HI){
+    for(let s=cur; s<=CONFIG.scenes; s++) if(!loaded.hi[s]) fwd.push({s, tier:'hi'});
+    for(let s=cur-1; s>=1; s--) if(!loaded.hi[s]) back.push({s, tier:'hi'});
+  }
+  /* lo of the *current* scene jumps ahead of everything */
+  const curLo = order.findIndex(x=>x.s===cur);
+  if(curLo>0) order.unshift(order.splice(curLo,1)[0]);
+  queue = order.concat(fwd, back);
+}
+async function pump(){
+  if(pumping) return;
+  pumping = true;
+  while(queue.length){
+    const {s, tier} = queue.shift();
+    await loadScene(s, tier);
+  }
+  pumping = false;
+}
+function prioritize(s){
+  if(s === queueScene && pumping) return;
+  queueScene = s;
+  buildQueue(s);
+  pump();
+}
+/* best available frame: exact hi, exact lo, else nearest of either tier.
+   Scrubbing never draws blank. */
+function frameFor(s, idx){
+  const hi = USE_HI ? store.hi[s] : null, lo = store.lo[s];
+  if(hi && hi[idx]) return {img:hi[idx], exact:true};
+  if(lo && lo[idx]) return {img:lo[idx], exact:true};
+  for(let d=1; d<CONFIG.frames; d++){
+    const cands = [hi&&hi[idx-d], hi&&hi[idx+d], lo&&lo[idx-d], lo&&lo[idx+d]];
+    for(const c of cands) if(c) return {img:c, exact:false};
+  }
+  return {img:null, exact:false};
+}
+
+/* ---------- scroll -> frame ---------- */
+let viewY = 0;           /* smoothed scroll position the canvas actually renders */
+let pending = null;      /* {scene, frame} currently wanted */
+let loopStart = 0;       /* rAF clock for the tail loop */
+let inLoop = false;
+
+function sceneAt(y){
+  if(y < CONFIG.introPx) return 0;
+  for(let s=1; s<=CONFIG.scenes; s++){
+    if(y < seg[s].holdEnd) return s;
+  }
+  return CONFIG.scenes;
+}
+
+function render(redrawOnly){
+  const y = Math.max(0, Math.min(viewY, TOTAL));
+  const s = sceneAt(y);
+
+  /* ---- opening still ---- */
+  if(s === 0){
+    inLoop = false;
+    pending = null;
+    draw(opening);
+    setLayer(0, 1);
+    setTone(false);
+    updateUI(0, y/CONFIG.introPx, y);
+    return;
+  }
+
+  const {start, end, holdEnd} = seg[s];
+  const isLast = s === CONFIG.scenes;
+  let frame, local;
+
+  if(y <= end){
+    /* scrubbing through the scene */
+    inLoop = false;
+    local = (y - start) / scenePx;
+    frame = Math.min(CONFIG.frames-1, Math.floor((y - start) / CONFIG.pxPerFrame));
+  }else{
+    /* past the scene: hold the last frame (or loop, on the last scene) */
+    local = 1;
+    frame = CONFIG.frames - 1;
+    if(isLast){
+      if(!inLoop){ inLoop = true; loopStart = performance.now(); }
+      const t = (performance.now() - loopStart) / (1000/CONFIG.fps);
+      frame = Math.floor(t) % CONFIG.frames;
+    }else{
+      inLoop = false;
+    }
+  }
+
+  pending = {scene:s, frame};
+  if(s !== queueScene) prioritize(s);
+  const {img, exact} = frameFor(s, frame);
+  if(img && img !== lastImg) draw(img);          /* skip the blit when the frame is unchanged */
+  if(exact === lastExact){} else { bufferPill.classList.toggle('show', !exact); lastExact = exact; }
+
+  if(redrawOnly) return;
+  warmDecode(s, frame);
+
+  /* text reveal: fades in near the scene end, stays through the hold */
+  const revealed = local >= CONFIG.revealAt;
+  setLayer(s, revealed ? 1 : 0);
+  setTone(lightAt(s, frame));
+  updateUI(s, local, y);
+}
+
+/* ---- DOM writes are diffed against the last applied state. The tick runs at
+   display refresh rate; without this every idle frame did ~40 class/style
+   writes, each a style-recalc trigger, for nothing. ---- */
+let lastExact = null, lastLayer = -1, lastLayerOn = null, lastScene = -1, lastFill = -1, lastScrub = -1, lastTone = null;
+/* Chrome goes to ink once the sand backdrop is in (frame ~28 of scene 2). The portrait
+   render frames tighter: the bottle fills the phone from about frame 70 of scene 2 until
+   the camera pulls back for the pump in scene 3, so the chrome stays light there. */
+function lightAt(s, frame){
+  if(s === 2) return frame >= 28 && !(PORTRAIT && frame >= 70);
+  if(s === 3) return !PORTRAIT || frame >= 36;
+  return s > 3;
+}
+function setTone(light){
+  if(light === lastTone) return;
+  document.body.classList.toggle('light', light);
+  lastTone = light;
+}
+function setLayer(idx, on){
+  on = !!on;
+  if(idx === lastLayer && on === lastLayerOn) return;
+  layers.forEach(l => l.classList.toggle('show', (+l.dataset.scene === idx) && on));
+  lastLayer = idx; lastLayerOn = on;
+}
+function updateUI(s, local, y){
+  const dots = rail.children;
+  if(s !== lastScene){
+    counter.textContent = String(s).padStart(2,'0');
+    for(let i=0;i<dots.length;i++){ dots[i].classList.toggle('on', i===s); dots[i].classList.toggle('done', i<s); }
+    navItems.forEach(n => n.classList.toggle('active', +n.dataset.goto === s));
+    lastScene = s; lastFill = -1;
+  }
+  const fill = Math.round(Math.max(0,Math.min(1,local))*100);
+  if(fill !== lastFill){ dots[s] && dots[s].style.setProperty('--fill', fill+'%'); lastFill = fill; }
+  const scrub = Math.round(y/TOTAL*1000)/10;
+  if(scrub !== lastScrub){ scrubfill.style.width = scrub+'%'; lastScrub = scrub; }
+}
+
+/* ---------- smoothed rAF driver ----------
+   Native scroll sets the target; the rendered position eases toward it every
+   frame. That decoupling is what makes the sequence glide instead of snapping,
+   and it also powers the tail loop. Same idea as Lenis, without the dependency. */
+/* Touch input already carries OS momentum. Lenis ships with touch smoothing
+   off for exactly this reason: a second easing on top of the native one makes
+   the frame trail the finger, which people report as "stuck". So touch tracks
+   1:1 and only wheel/trackpad gets the lerp. */
+const TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+const SMOOTH = TOUCH ? CONFIG.smoothTouch : CONFIG.smooth;
+let lastT = 0;
+(function tick(t){
+  /* SMOOTH is defined per 60Hz frame. Rescale it by the real elapsed time so
+     a 30Hz laptop, a 120Hz monitor and a throttled tab all ease at the same
+     speed instead of feeling sluggish or twitchy. */
+  const dt = lastT ? Math.min(t - lastT, 100) : 16.667;
+  lastT = t;
+  const target = Math.max(0, Math.min(scrollY, TOTAL));
+  const d = target - viewY;
+  if(SMOOTH >= 1){ viewY = target; }
+  else {
+    const k = 1 - Math.pow(1 - SMOOTH, dt / 16.667);
+    if(Math.abs(d) > .08) viewY += d * k;
+    else if(viewY !== target) viewY = target;
+  }
+  render();
+  requestAnimationFrame(tick);
+})(0);
+
+/* Mobile browsers fire resize every time the URL bar shows or hides during a
+   scroll. Rebuilding the canvas on each of those is a visible flash mid-swipe,
+   so only react to real geometry changes: a width change, or a large height
+   change (rotation), never the ~60-100px bar toggle. */
+let lastW = innerWidth, lastH = innerHeight;
+addEventListener('resize', ()=>{
+  const dw = Math.abs(innerWidth - lastW), dh = Math.abs(innerHeight - lastH);
+  if(dw < 1 && dh < 160) return;
+  lastW = innerWidth; lastH = innerHeight;
+  const nowPortrait = (innerHeight / innerWidth) > 1.2;
+  if(nowPortrait !== PORTRAIT){ location.reload(); return; }   /* frame set no longer matches */
+  resize(); render(true);
+});
+
+/* ---------- nav ---------- */
+navItems.forEach(n => n.addEventListener('click', e=>{
+  e.stopPropagation();
+  const s = +n.dataset.goto;
+  prioritize(s);
+  scrollTo({top: seg[s].start, behavior:'auto'});
+}));
+function restart(){ scrollTo({top:0, behavior:'auto'}); viewY = 0; render(); }
+
+/* ---------- boot ---------- */
+(async function boot(){
+  for(let i=0;i<=CONFIG.scenes;i++) rail.appendChild(document.createElement('i'));
+  if(scrollY > 0) scrollTo({top:0, behavior:'auto'});
+  resize();
+
+  let done = 0;
+  const total = CONFIG.frames + 1;
+  const prog = ()=>{ done++; loadbar.style.width = Math.min(100,Math.round(done/total*100))+'%'; };
+  opening = await loadImage(PORTRAIT ? CONFIG.openingPt : CONFIG.opening); prog();
+  loadtxt.textContent = 'Preparing the first scene';
+  await loadScene(1, USE_HI ? 'hi' : 'lo', prog);
+
+  render();
+  loader.classList.add('hidden');
+  prioritize(1);   /* proxies for every scene, then hi-res radiating out from here */
+})();
+
+window.app = { restart, CONFIG, seg };
+</script>
+</body>
+</html>

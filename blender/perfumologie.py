@@ -24,6 +24,8 @@ def arg(name, default=None):
 MODE = arg('--mode', 'hi')
 SCENES = [int(s) for s in arg('--scenes', '1,2,3,4,5').split(',')]
 FRAMES = arg('--frames')
+SHOTS = arg('--shots')        # test stills across scenes, e.g. 2:60,4:36
+PALETTE = arg('--palette', 'sabbia')
 SAMPLES = int(arg('--samples', '96'))
 N = 96
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,10 +39,24 @@ FAMILY = {
     'blue': '#2f6f84',       # Blue Bayberry, 2182 C
     'brown': '#6f625c',      # Brown Bergamot, 411 C
 }
-BG = {
-    'dark': '#0b0a09', 'sand': '#d8c9b6', 'green': '#d3cdbf', 'tangerine': '#e4cab6',
-    'blue': '#c6cfd1', 'brown': '#d3c6bd', 'row': '#d9cfc3',
+# The bottles keep the client's Pantones in every palette; only the world around them changes.
+# exposure and glow fade in with the backdrop in scene 2, so scene 1 is the same in all of them.
+# glow: a low light on the back wall behind the bottle, which the glass refracts on the deep backdrops.
+# absorb: deepens the liquid, which a bright exposure would otherwise wash out.
+# lift_strips: raises the rim lights clear of the floor, where they leave hot patches.
+# fade_floor: brings the floor in over the start of scene 2 instead of all at once.
+PALETTES = {
+    'sabbia': dict(bg={'sand': '#d8c9b6', 'green': '#d3cdbf', 'tangerine': '#e4cab6',
+                       'blue': '#c6cfd1', 'brown': '#d3c6bd', 'row': '#d9cfc3'}),
+    'gesso': dict(bg={'sand': '#f1efea', 'green': '#f1efea', 'tangerine': '#f3ece6',
+                      'blue': '#e9eff0', 'brown': '#efebe7', 'row': '#f1f0ec'},
+                  exposure=0.32, absorb=1.5, lift_strips=True, fade_floor=True),
+    'colore': dict(bg={'sand': '#2c5a42', 'green': '#2c5a42', 'tangerine': '#84452c',
+                       'blue': '#135a70', 'brown': '#54433b', 'row': '#3a3d44'},
+                   glow=1500, lift_strips=True, fade_floor=True),
 }
+PAL = PALETTES[PALETTE]
+BG = dict(PAL['bg'], dark='#0b0a09')
 LINE = (1.0, 0.78, 0.52)      # warm champagne light
 
 def hex_srgb(h):
@@ -316,6 +332,7 @@ def make_bottle(tag, parent):
 tilt_main = empty('tilt_main')
 spin_main, pump_main, mats_main = make_bottle('main', tilt_main)
 others = {}
+ABSORB = PAL.get('absorb', 1.0)
 for fam in ('green', 'tangerine', 'blue'):
     holder = empty('hold_' + fam)
     sp, pu, ms = make_bottle(fam, holder)
@@ -376,8 +393,9 @@ cols = [[bm.verts.new((x, y, z)) for y, z in prof] for x in (-60, 60)]
 for i in range(len(prof) - 1):
     bm.faces.new((cols[0][i], cols[1][i], cols[1][i + 1], cols[0][i + 1]))
 cyc = mesh_obj('cyc', bm, None)
-cyc_mat = Mat('cyc').set(rough=0.9)
+cyc_mat = Mat('cyc').set(rough=PAL.get('floor_rough', 0.9))
 cyc.data.materials.append(cyc_mat.m)
+CYC_SPEC = cyc_mat.p.inputs['Specular IOR Level'].default_value
 
 world = bpy.data.worlds.new('world'); scn.world = world
 try: world.use_nodes = True
@@ -399,6 +417,9 @@ LIGHTS = [(area(n, loc, s, e, sy), e) for n, loc, s, e, sy in (
     ('top', (0, -1, 10), 5, 200, None),
     ('fill', (6, -8, 2.5), 6, 140, None))]
 SWEEP = area('sweep', (-14, -9, 3), 1.2, 0, size_y=9)
+glow_aim = empty('glow_aim'); glow_aim.location = (0, 15, 4)
+GLOW = area('glow', (0, 5, 1.1), 9, 0, size_y=1.2)
+GLOW.constraints[0].target = glow_aim
 
 cam_d = bpy.data.cameras.new('cam'); cam_d.lens = 70; cam_d.sensor_fit = 'AUTO'; cam_d.clip_end = 300
 cam = link(bpy.data.objects.new('cam', cam_d)); scn.camera = cam
@@ -453,17 +474,17 @@ def family_at(f):
     return lin_hex(FAMILY['brown']), BG['brown']
 
 def state(s, f):
-    st = dict(target=2.24, yaw=0, pitch=4, H=H_FULL, W=0, float=0,
+    st = dict(look=1, floor=1, target=2.24, yaw=0, pitch=4, H=H_FULL, W=0, float=0,
               tilt=0, spin=20, light=1, bg=BG['sand'], line=0, line_a=0, spark_z=None,
               spark_a=0, lift=0, twist=0, pump_tilt=0, rings=[0, 0, 0],
               fam=lin_hex(FAMILY['green']), main_x=0, others={k: None for k in ROW}, sweep=0)
     if s == 1:
-        st.update(tilt=11, float=0.5, spin=ramp(f, 70, 95, 0, 15), light=ramp(f, 48, 82, 0, 1), bg=BG['dark'],
+        st.update(look=0, tilt=11, float=0.5, spin=ramp(f, 70, 95, 0, 15), light=ramp(f, 48, 82, 0, 1), bg=BG['dark'],
                   line=ramp(f, 10, 62, 0, 1), line_a=1 - ease(span(f, 68, 92)),
                   spark_z=ramp(f, 0, 14, -2.6, 0.07), spark_a=1 - ease(span(f, 14, 26)),
                   H=ramp(f, 0, 95, 6.9, 6.2), pitch=ramp(f, 0, 95, 7, 4), yaw=ramp(f, 70, 95, 0, -4))
     elif s == 2:
-        st.update(tilt=ramp(f, 0, 60, 11, 0), float=ramp(f, 0, 60, 0.5, 0), spin=ramp(f, 0, 95, 15, 40),
+        st.update(look=ease(span(f, 0, 34)), floor=ease(span(f, 0, 16)), tilt=ramp(f, 0, 60, 11, 0), float=ramp(f, 0, 60, 0.5, 0), spin=ramp(f, 0, 95, 15, 40),
                   bg=mix_hex(BG['dark'], BG['sand'], ease(span(f, 0, 34))),
                   target=ramp(f, 18, 95, 2.24, 2.55),
                   H=ramp(f, 18, 95, 6.2, 2.7), pitch=ramp(f, 0, 95, 4, 2), yaw=ramp(f, 0, 95, -4, -8))
@@ -497,6 +518,8 @@ def state(s, f):
     return st
 
 def apply(st, s, f):
+    global ABSORB
+    ABSORB = lerp(1.0, PAL.get('absorb', 1.0), st['look'])
     tilt_main.location = (st['main_x'], 0, st['float'])
     tilt_main.rotation_euler = (0, math.radians(st['tilt']), 0)
     spin_main.rotation_euler = (0, 0, math.radians(st['spin']))
@@ -528,12 +551,20 @@ def apply(st, s, f):
             t = 2 * math.pi * k / len(spl.points)
             pt.co = (rad * math.cos(t), rad * math.sin(t), z, 1)
         em.inputs['Strength'].default_value = 3 * min(1, p * 1.5)
-    for ob, e in LIGHTS: ob.data.energy = e * st['light']
+    for ob, e in LIGHTS:
+        ob.data.energy = e * st['light']
+        if PAL.get('lift_strips') and ob.name.startswith('strip'):
+            ob.location.z = lerp(3, 3.7, st['look']); ob.data.size_y = lerp(7, 6, st['look'])
+    GLOW.data.energy = PAL.get('glow', 0) * st['look']
+    scn.view_settings.exposure = PAL.get('exposure', 0) * st['look']
     SWEEP.data.energy = 1400 * st['sweep']
     SWEEP.location = (lerp(-14, 14, f / N) if s == 5 else -14, -9, 3)
     cyc.hide_render = s == 1          # the dark opening floats in black, no floor
     bg = lin_hex(st['bg'])
-    cyc_mat.p.inputs['Base Color'].default_value = rgba(bg)
+    # scene 1 has no floor: fading it in keeps the seam into scene 2 from popping
+    floor = st['floor'] if PAL.get('fade_floor') else 1
+    cyc_mat.p.inputs['Base Color'].default_value = rgba(tuple(c * floor for c in bg))
+    cyc_mat.p.inputs['Specular IOR Level'].default_value = CYC_SPEC * floor
     wbg.inputs['Color'].default_value = rgba(bg)
     wbg.inputs['Strength'].default_value = 0.7
     # camera: fit H (vertical) and W (horizontal) content around the target
@@ -549,14 +580,15 @@ def apply(st, s, f):
 
 # ---------------------------------------------------------------- render loop
 frames = [int(x) for x in FRAMES.split(',')] if FRAMES else list(range(N))
-for s in SCENES:
+shots = ([tuple(int(v) for v in x.split(':')) for x in SHOTS.split(',')] if SHOTS
+         else [(s, f) for s in SCENES for f in frames])
+for s, f in shots:
     os.makedirs(os.path.join(OUT, str(s)), exist_ok=True)
-    for f in frames:
-        path = os.path.join(OUT, str(s), '%03d.jpg' % (f + 1))
-        if os.path.exists(path) and not FRAMES: continue
-        apply(state(s, f), s, f)
-        bpy.context.view_layer.update()
-        r.filepath = path
-        bpy.ops.render.render(write_still=True)
-        print(f'[render] scene {s} frame {f + 1}/{N}', flush=True)
+    path = os.path.join(OUT, str(s), '%03d.jpg' % (f + 1))
+    if os.path.exists(path) and not (FRAMES or SHOTS): continue
+    apply(state(s, f), s, f)
+    bpy.context.view_layer.update()
+    r.filepath = path
+    bpy.ops.render.render(write_still=True)
+    print(f'[render] scene {s} frame {f + 1}/{N}', flush=True)
 print('[done]')
